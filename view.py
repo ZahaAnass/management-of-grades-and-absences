@@ -2,16 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import tkinter.font as tkFont
 from utils import calculate_average, attendance_rate, filter_students, export_csv, export_pdf
-
-# In-memory data
-students = []  # List of dicts: {'id', 'nom', 'prenom', 'classe'}
-notes = []     # List of dicts: {'eleve_id', 'matiere', 'note'}
-absences = []  # List of dicts: {'eleve_id', 'date'}
-
-# Helper for unique IDs
-def next_id(data):
-    return max([item.get('id', 0) for item in data], default=0) + 1
-
+import database as db
 # Colors and styling constants for theme
 COLORS = {
     'primary': '#3f51b5',     # Indigo
@@ -62,18 +53,18 @@ class EleveForm(tk.Toplevel):
         
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['primary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                background=[('active', COLORS['primary_light'])])
         
         style.configure('Secondary.TButton', 
-                         background=COLORS['secondary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['secondary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Secondary.TButton',
-                  background=[('active', COLORS['secondary'])])
+                    background=[('active', COLORS['secondary'])])
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, style='Card.TFrame', padding=20)

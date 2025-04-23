@@ -27,6 +27,24 @@ def create_table():
     conn.commit()
     conn.close()
 
+def show_table():
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+                    SELECT
+                        e.id,
+                        e.nom,
+                        e.prenom,
+                        e.classe,
+                        (SELECT avg(note) FROM notes WHERE eleve_id = e.id) as moyenne,
+                        (SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id) as absences,
+                        ROUND(100.0 * (200 - IFNULL((SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id), 0)) / 200, 2) as taux_assiduite
+                    FROM eleves as e
+                """)
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
 def add_eleve(nom, prenom, classe):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
