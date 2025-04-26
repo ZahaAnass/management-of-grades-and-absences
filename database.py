@@ -118,21 +118,6 @@ def get_absences(eleve_id):
     conn.close()
     return data
 
-def get_stats():
-    conn = sqlite3.connect("grademanagement.db")
-    cursor = conn.cursor()
-    # Moyenne générale
-    cursor.execute("SELECT AVG(note) FROM notes")
-    moyenne = cursor.fetchone()[0] or 0
-    # Taux d'assiduité moyen (exemple simplifié)
-    cursor.execute("SELECT SUM(nb_jours) FROM absences")
-    total_abs = cursor.fetchone()[0] or 0
-    cursor.execute("SELECT COUNT(*) FROM eleves")
-    total_eleves = cursor.fetchone()[0] or 1
-    taux_assiduite = max(0, 100 - (total_abs / (total_eleves * 30)) * 100)  # 30 jours de cours/mois
-    conn.close()
-    return round(moyenne,2), round(taux_assiduite,2)
-
 def init_sample_data():
     if not get_eleves():
         add_eleve("Dupont", "Alice", "6A")
