@@ -722,11 +722,11 @@ class NotesViewDialog(tk.Toplevel):
                         
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['primary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, style='Card.TFrame', padding=20)
@@ -737,18 +737,19 @@ class NotesViewDialog(tk.Toplevel):
         info_frame.pack(fill='x', pady=(0, 20))
         
         ttk.Label(info_frame, text=f"Notes de {self.student['prenom']} {self.student['nom']}", 
-                 style='Title.TLabel').pack(pady=(0, 10))
-                 
+                    style='Title.TLabel').pack(pady=(0, 10))
+
         ttk.Label(info_frame, text=f"Classe: {self.student['classe']} | ID: {self.student['id']}",
-                 style='TLabel').pack()
+                    style='TLabel').pack()
         
         # Calculate average
-        notes_values = [n['note'] for n in self.student_notes]
+        notes_values = [note[1] for note in self.student_notes]
         avg = calculate_average(notes_values)
+        # :.2f is a format specifier that formats a float to 2 decimal places
         avg_text = f"{avg:.2f}" if avg is not None else "Aucune note"
         
         ttk.Label(info_frame, text=f"Moyenne générale: {avg_text}",
-                 style='TLabel').pack(pady=(5, 0))
+                    style='TLabel').pack(pady=(5, 0))
         
         # Notes table
         table_frame = ttk.Frame(main_frame, style='Card.TFrame')
@@ -759,38 +760,40 @@ class NotesViewDialog(tk.Toplevel):
         scrollbar.pack(side='right', fill='y')
         
         # Table
-        columns = ("Matière", "Note")
+        columns = ("Matière", "Note", "ID")
         self.notes_tree = ttk.Treeview(table_frame, columns=columns, show='headings',
-                                      yscrollcommand=scrollbar.set)
+                                        yscrollcommand=scrollbar.set)
         
         self.notes_tree.column("Matière", width=300, anchor='w')
         self.notes_tree.column("Note", width=100, anchor='center')
+        self.notes_tree.column("ID", width=100, anchor='center')
         
         self.notes_tree.heading("Matière", text="Matière")
         self.notes_tree.heading("Note", text="Note")
+        self.notes_tree.heading("ID", text="ID")
         
         self.notes_tree.pack(fill='both', expand=True)
         scrollbar.config(command=self.notes_tree.yview)
         
         # Fill table
         for note in self.student_notes:
-            self.notes_tree.insert('', 'end', values=(note['matiere'], note['note']))
+            self.notes_tree.insert('', 'end', values=(note[0], note[1], note[2]))
         
         # Buttons
         button_frame = ttk.Frame(main_frame, style='Card.TFrame')
         button_frame.pack(fill='x', pady=(20, 0))
         
         ttk.Button(button_frame, text="Ajouter une note", 
-                  command=self.add_note, 
-                  style='Primary.TButton').pack(side='left', padx=5)
-                  
+                    command=self.update_note, 
+                    style='Primary.TButton').pack(side='left', padx=5)
+
         ttk.Button(button_frame, text="Supprimer la note sélectionnée", 
-                  command=self.delete_selected_note, 
-                  style='Primary.TButton').pack(side='left', padx=5)
-                  
+                    command=self.delete_selected_note, 
+                    style='Primary.TButton').pack(side='left', padx=5)
+
         ttk.Button(button_frame, text="Fermer", 
-                  command=self.destroy, 
-                  style='Primary.TButton').pack(side='right', padx=5)
+                    command=self.destroy, 
+                    style='Primary.TButton').pack(side='right', padx=5)
 
     def center_window(self):
         self.update_idletasks()
@@ -800,13 +803,27 @@ class NotesViewDialog(tk.Toplevel):
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
-    def add_note(self):
-        # Placeholder for adding note
-        print("TODO: add_note")
+    def update_note(self):
+        # selected_item = self.notes_tree.selection()[0]
+        # if not selected_item:
+        #     return
+        # item = self.notes_tree.item(selected_item)
+        # values = item['values']
+        # note_id = values[2]
+        # new_note = float(self.note_entry.get())
+        # update_note(note_id, new_note)
+        print("TODO: update_note")
         self.destroy()
 
     def delete_selected_note(self):
-        # Placeholder for deleting selected note
+        # selected_item = self.notes_tree.selection()[0]
+        # if not selected_item:
+        #     return
+        # item = self.notes_tree.item(selected_item)
+        # values = item['values']
+        # note_id = values[2]
+        # db.delete_note(note_id)
+        # self.destroy()
         print("TODO: delete_selected_note")
         self.destroy()
 
