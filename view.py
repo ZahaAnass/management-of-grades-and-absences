@@ -1,8 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import tkinter.font as tkFont
-from utils import calculate_average, attendance_rate, filter_students, export_csv, export_pdf
-import database as db
+
 # Colors and styling constants for theme
 COLORS = {
     'primary': '#3f51b5',     # Indigo
@@ -110,39 +109,12 @@ class EleveForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def load_student_data(self):
-        for student in students:
-            if student['id'] == self.eleve_id:
-                self.nom_var.set(student['nom'])
-                self.prenom_var.set(student['prenom'])
-                self.classe_var.set(student['classe'])
-                break
+        # Placeholder for loading student data
+        pass
 
     def save_student(self):
-        nom = self.nom_var.get().strip()
-        prenom = self.prenom_var.get().strip()
-        classe = self.classe_var.get().strip()
-        
-        if not (nom and prenom and classe):
-            messagebox.showerror("Erreur", "Tous les champs sont obligatoires.")
-            return
-            
-        if self.eleve_id is None:
-            # Adding new student
-            student_id = next_id(students)
-            new_student = {'id': student_id, 'nom': nom, 'prenom': prenom, 'classe': classe}
-            students.append(new_student)
-            messagebox.showinfo("Succès", "Élève ajouté avec succès.")
-        else:
-            # Updating existing student
-            for student in students:
-                if student['id'] == self.eleve_id:
-                    student['nom'] = nom
-                    student['prenom'] = prenom
-                    student['classe'] = classe
-                    messagebox.showinfo("Succès", "Informations de l'élève mises à jour.")
-                    break
-        
-        self.parent.refresh_table()
+        # Placeholder for saving student
+        print("TODO: save_student")
         self.destroy()
 
 
@@ -233,15 +205,8 @@ class NoteForm(tk.Toplevel):
         ttk.Button(button_frame, text=save_text, command=self.save_note, style='Primary.TButton').pack(side='right', padx=5)
 
     def update_eleve_list(self):
-        eleve_options = [(f"{s['id']} - {s['nom']} {s['prenom']} ({s['classe']})") for s in students]
-        self.eleve_combobox['values'] = eleve_options
-        
-        # Select the current student if editing
-        if self.eleve_id is not None:
-            for i, option in enumerate(eleve_options):
-                if option.startswith(f"{self.eleve_id} -"):
-                    self.eleve_combobox.current(i)
-                    break
+        # Placeholder for updating élève list
+        pass
 
     def center_window(self):
         self.update_idletasks()
@@ -252,41 +217,13 @@ class NoteForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def load_note_data(self):
-        for note in notes:
-            if note['eleve_id'] == self.eleve_id and note['matiere'] == self.matiere:
-                self.matiere_var.set(note['matiere'])
-                self.note_var.set(str(note['note']))
-                break
+        # Placeholder for loading note data
+        pass
 
     def save_note(self):
-        try:
-            selected = self.eleve_combobox.get()
-            eleve_id = int(selected.split(' - ')[0])
-            note_value = float(self.note_var.get())
-            matiere = self.matiere_var.get().strip()
-            
-            if not matiere:
-                messagebox.showerror("Erreur", "La matière est obligatoire.")
-                return
-                
-            # Check if note exists
-            note_found = False
-            for note in notes:
-                if note['eleve_id'] == eleve_id and note['matiere'] == matiere:
-                    note['note'] = note_value
-                    note_found = True
-                    messagebox.showinfo("Succès", "Note mise à jour avec succès.")
-                    break
-                    
-            if not note_found:
-                notes.append({'eleve_id': eleve_id, 'matiere': matiere, 'note': note_value})
-                messagebox.showinfo("Succès", "Note ajoutée avec succès.")
-            
-            self.parent.refresh_table()
-            self.destroy()
-            
-        except (ValueError, IndexError):
-            messagebox.showerror("Erreur", "Veuillez vérifier les valeurs saisies.")
+        # Placeholder for saving note
+        print("TODO: save_note")
+        self.destroy()
 
 
 class AbsenceForm(tk.Toplevel):
@@ -364,15 +301,8 @@ class AbsenceForm(tk.Toplevel):
         ttk.Button(button_frame, text="Enregistrer", command=self.save_absence, style='Primary.TButton').pack(side='right', padx=5)
 
     def update_eleve_list(self):
-        eleve_options = [(f"{s['id']} - {s['nom']} {s['prenom']} ({s['classe']})") for s in students]
-        self.eleve_combobox['values'] = eleve_options
-        
-        # Select the current student if provided
-        if self.eleve_id is not None:
-            for i, option in enumerate(eleve_options):
-                if option.startswith(f"{self.eleve_id} -"):
-                    self.eleve_combobox.current(i)
-                    break
+        # Placeholder for updating élève list
+        pass
 
     def center_window(self):
         self.update_idletasks()
@@ -383,29 +313,9 @@ class AbsenceForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def save_absence(self):
-        try:
-            selected = self.eleve_combobox.get()
-            eleve_id = int(selected.split(' - ')[0])
-            date = self.date_var.get().strip()
-            
-            if not date:
-                messagebox.showerror("Erreur", "La date est obligatoire.")
-                return
-                
-            # Check if absence already exists
-            for absence in absences:
-                if absence['eleve_id'] == eleve_id and absence['date'] == date:
-                    messagebox.showerror("Erreur", "Cette absence est déjà enregistrée.")
-                    return
-                    
-            absences.append({'eleve_id': eleve_id, 'date': date})
-            messagebox.showinfo("Succès", "Absence enregistrée avec succès.")
-            
-            self.parent.refresh_table()
-            self.destroy()
-            
-        except (ValueError, IndexError):
-            messagebox.showerror("Erreur", "Veuillez vérifier les valeurs saisies.")
+        # Placeholder for saving absence
+        print("TODO: save_absence")
+        self.destroy()
 
 
 class GestionNotesAbsencesApp(tk.Tk):
@@ -641,47 +551,12 @@ class GestionNotesAbsencesApp(tk.Tk):
         self.count_label.pack(side='right', padx=10, pady=5)
 
     def get_classes(self):
-        return sorted(list(set([s['classe'] for s in students])))
+        # Placeholder for getting classes
+        return []
 
     def refresh_table(self):
-        # Clear table
-        for row in self.tree.get_children():
-            self.tree.delete(row)
-            
-        # Filter
-        classe = self.classe_filter.get()
-        query = self.search_var.get()
-        filtered = filter_students(students, query=query, classe=classe)
-        
-        # Update table
-        for s in filtered:
-            sid = s['id']
-            snotes = [n['note'] for n in notes if n['eleve_id'] == sid]
-            avg = calculate_average(snotes)
-            n_abs = len([a for a in absences if a['eleve_id'] == sid])
-            taux = attendance_rate(200, n_abs)  # Assume 200 days/year
-            
-            self.tree.insert('', 'end', iid=sid, values=(
-                sid,
-                s['nom'], 
-                s['prenom'], 
-                s['classe'], 
-                f"{avg:.2f}" if avg is not None else '-', 
-                n_abs, 
-                f"{taux}%"
-            ))
-            
-        # Update status
-        student_count = len(filtered)
-        self.count_label.config(text=f"{student_count} élève{'s' if student_count != 1 else ''}")
-        self.status_label.config(text="Données filtrées" if (classe or query) else "Toutes les données")
-        
-        # Update class filter values
-        current = self.classe_filter.get()
-        classes = self.get_classes()
-        self.classe_filter['values'] = classes
-        if current and current in classes:
-            self.classe_filter.set(current)
+        # Placeholder for refreshing the table
+        print("TODO: refresh_table")
 
     def reset_filters(self):
         self.classe_filter.set('')
@@ -702,136 +577,28 @@ class GestionNotesAbsencesApp(tk.Tk):
             self.edit_selected_student()
 
     def edit_selected_student(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner un élève à modifier.")
-            return
-        
-        sid = int(selected[0])
-        EleveForm(self, sid)
+        # Placeholder for editing selected student
+        print("TODO: edit_selected_student")
 
     def delete_selected_student(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner un élève à supprimer.")
-            return
-            
-        sid = int(selected[0])
-        student = next((s for s in students if s['id'] == sid), None)
-        
-        if student:
-            confirm = messagebox.askyesno(
-                "Confirmation", 
-                f"Êtes-vous sûr de vouloir supprimer l'élève {student['prenom']} {student['nom']} ?\n"
-                "Cette action supprimera également toutes ses notes et absences."
-            )
-            
-            if confirm:
-                # Remove the student
-                students.remove(student)
-                
-                # Remove related notes and absences
-                global notes, absences
-                notes = [n for n in notes if n['eleve_id'] != sid]
-                absences = [a for a in absences if a['eleve_id'] != sid]
-                
-                # Refresh the table
-                self.refresh_table()
-                messagebox.showinfo("Succès", "Élève supprimé avec succès.")
-        else:
-            messagebox.showerror("Erreur", "Élève introuvable.")
+        # Placeholder for deleting selected student
+        print("TODO: delete_selected_student")
 
     def view_student_notes(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner un élève pour voir ses notes.")
-            return
-            
-        sid = int(selected[0])
-        student = next((s for s in students if s['id'] == sid), None)
-        student_notes = [n for n in notes if n['eleve_id'] == sid]
-        
-        if student:
-            NotesViewDialog(self, student, student_notes)
-        else:
-            messagebox.showerror("Erreur", "Élève introuvable.")
+        # Placeholder for viewing student notes
+        print("TODO: view_student_notes")
 
     def view_student_absences(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner un élève pour voir ses absences.")
-            return
-            
-        sid = int(selected[0])
-        student = next((s for s in students if s['id'] == sid), None)
-        student_absences = [a for a in absences if a['eleve_id'] == sid]
-        
-        if student:
-            AbsencesViewDialog(self, student, student_absences)
-        else:
-            messagebox.showerror("Erreur", "Élève introuvable.")
+        # Placeholder for viewing student absences
+        print("TODO: view_student_absences")
 
     def export_csv_ui(self):
-        filename = filedialog.asksaveasfilename(
-            defaultextension='.csv', 
-            filetypes=[('CSV files', '*.csv')],
-            title="Exporter en CSV"
-        )
-        
-        if filename:
-            # Export all students with computed fields
-            export_data = []
-            for s in students:
-                sid = s['id']
-                snotes = [n['note'] for n in notes if n['eleve_id'] == sid]
-                avg = calculate_average(snotes)
-                n_abs = len([a for a in absences if a['eleve_id'] == sid])
-                taux = attendance_rate(200, n_abs)
-                export_data.append({
-                    'ID': sid,
-                    'Nom': s['nom'],
-                    'Prénom': s['prenom'],
-                    'Classe': s['classe'],
-                    'Moyenne': avg if avg is not None else '-',
-                    'Absences': n_abs,
-                    'Taux d\'Assiduité': f"{taux}%"
-                })
-                
-            if export_csv(export_data, filename):
-                messagebox.showinfo("Succès", "Export CSV réussi.")
-            else:
-                messagebox.showerror("Erreur", "Aucune donnée à exporter.")
+        # Placeholder for exporting CSV
+        print("TODO: export_csv_ui")
 
     def export_pdf_ui(self):
-        filename = filedialog.asksaveasfilename(
-            defaultextension='.pdf', 
-            filetypes=[('PDF files', '*.pdf')],
-            title="Exporter en PDF"
-        )
-        
-        if filename:
-            # Prepare data for PDF export
-            export_data = []
-            for s in students:
-                sid = s['id']
-                snotes = [n['note'] for n in notes if n['eleve_id'] == sid]
-                avg = calculate_average(snotes)
-                n_abs = len([a for a in absences if a['eleve_id'] == sid])
-                taux = attendance_rate(200, n_abs)
-                export_data.append({
-                    'ID': sid,
-                    'Nom': s['nom'],
-                    'Prénom': s['prenom'],
-                    'Classe': s['classe'],
-                    'Moyenne': avg if avg is not None else '-',
-                    'Absences': n_abs,
-                    'Taux d\'Assiduité': f"{taux}%"
-                })
-                
-            if export_pdf(export_data, filename):
-                messagebox.showinfo("Succès", "Export PDF réussi.")
-            else:
-                messagebox.showerror("Erreur", "Export PDF non disponible.")
+        # Placeholder for exporting PDF
+        print("TODO: export_pdf_ui")
 
     def sort_treeview(self, tree, col, reverse):
         """Sort treeview content by column"""
@@ -985,35 +752,14 @@ class NotesViewDialog(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def add_note(self):
-        NoteForm(self.parent, self.student['id'])
-        self.destroy()  # Close this dialog
+        # Placeholder for adding note
+        print("TODO: add_note")
+        self.destroy()
 
     def delete_selected_note(self):
-        selected = self.notes_tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner une note à supprimer.")
-            return
-            
-        matiere = self.notes_tree.item(selected[0], 'values')[0]
-        
-        # Confirm deletion
-        confirm = messagebox.askyesno(
-            "Confirmation", 
-            f"Êtes-vous sûr de vouloir supprimer la note en {matiere} ?"
-        )
-        
-        if confirm:
-            # Find and remove the note
-            global notes
-            for note in notes:
-                if note['eleve_id'] == self.student['id'] and note['matiere'] == matiere:
-                    notes.remove(note)
-                    break
-                    
-            # Refresh parent table
-            self.parent.refresh_table()
-            messagebox.showinfo("Succès", "Note supprimée avec succès.")
-            self.destroy()  # Close dialog after deletion
+        # Placeholder for deleting selected note
+        print("TODO: delete_selected_note")
+        self.destroy()
 
 
 class AbsencesViewDialog(tk.Toplevel):
@@ -1134,72 +880,15 @@ class AbsencesViewDialog(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def add_absence(self):
-        AbsenceForm(self.parent, self.student['id'])
-        self.destroy()  # Close this dialog
+        # Placeholder for adding absence
+        print("TODO: add_absence")
+        self.destroy()
 
     def delete_selected_absence(self):
-        selected = self.absences_tree.selection()
-        if not selected:
-            messagebox.showinfo("Information", "Veuillez sélectionner une absence à supprimer.")
-            return
-            
-        date = self.absences_tree.item(selected[0], 'values')[0]
-        
-        # Confirm deletion
-        confirm = messagebox.askyesno(
-            "Confirmation", 
-            f"Êtes-vous sûr de vouloir supprimer l'absence du {date} ?"
-        )
-        
-        if confirm:
-            # Find and remove the absence
-            global absences
-            for absence in absences:
-                if absence['eleve_id'] == self.student['id'] and absence['date'] == date:
-                    absences.remove(absence)
-                    break
-                    
-            # Refresh parent table
-            self.parent.refresh_table()
-            messagebox.showinfo("Succès", "Absence supprimée avec succès.")
-            self.destroy()  # Close dialog after deletion
-
-
-# Add some sample data for testing
-def add_sample_data():
-    # Sample students
-    students.extend([
-        {'id': 1, 'nom': 'Dupont', 'prenom': 'Jean', 'classe': '6A'},
-        {'id': 2, 'nom': 'Martin', 'prenom': 'Sophie', 'classe': '6A'},
-        {'id': 3, 'nom': 'Dubois', 'prenom': 'Marie', 'classe': '5B'},
-        {'id': 4, 'nom': 'Bernard', 'prenom': 'Lucas', 'classe': '5B'},
-        {'id': 5, 'nom': 'Robert', 'prenom': 'Emma', 'classe': '4C'},
-    ])
-    
-    # Sample notes
-    notes.extend([
-        {'eleve_id': 1, 'matiere': 'Mathématiques', 'note': 15.5},
-        {'eleve_id': 1, 'matiere': 'Français', 'note': 14.0},
-        {'eleve_id': 1, 'matiere': 'Histoire', 'note': 12.5},
-        {'eleve_id': 2, 'matiere': 'Mathématiques', 'note': 17.0},
-        {'eleve_id': 2, 'matiere': 'Français', 'note': 16.5},
-        {'eleve_id': 3, 'matiere': 'Mathématiques', 'note': 11.0},
-        {'eleve_id': 4, 'matiere': 'Français', 'note': 10.5},
-        {'eleve_id': 5, 'matiere': 'Histoire', 'note': 18.0},
-    ])
-    
-    # Sample absences
-    absences.extend([
-        {'eleve_id': 1, 'date': '2024-01-10'},
-        {'eleve_id': 1, 'date': '2024-02-15'},
-        {'eleve_id': 3, 'date': '2024-01-05'},
-        {'eleve_id': 3, 'date': '2024-01-06'},
-        {'eleve_id': 3, 'date': '2024-01-07'},
-        {'eleve_id': 4, 'date': '2024-03-20'},
-        {'eleve_id': 5, 'date': '2024-02-01'},
-    ])
+        # Placeholder for deleting selected absence
+        print("TODO: delete_selected_absence")
+        self.destroy()
 
 if __name__ == '__main__':
-    add_sample_data()  # Add sample data for testing
     app = GestionNotesAbsencesApp()
     app.mainloop()
