@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import tkinter.font as tkFont
+import database as db
+from utils import *
 
 # Colors and styling constants for theme
 COLORS = {
@@ -109,12 +111,30 @@ class EleveForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def load_student_data(self):
-        # Placeholder for loading student data
-        pass
+        if self.eleve_id:
+            eleves = db.get_eleves()
+            for eleve in eleves:
+                if eleve[0] == self.eleve_id:
+                    self.nom_var.set(eleve[1])
+                    self.prenom_var.set(eleve[2])
+                    self.classe_var.set(eleve[3])
+                    break
 
     def save_student(self):
-        # Placeholder for saving student
-        print("TODO: save_student")
+        nom = self.nom_var.get()
+        prenom = self.prenom_var.get()
+        classe = self.classe_var.get()
+        
+        if not (nom and prenom and classe):
+            messagebox.showerror("Erreur", "Tous les champs sont obligatoires")
+            return
+        
+        if self.eleve_id is None:
+            db.add_eleve(nom, prenom, classe)
+        else:
+            db.update_eleve(self.eleve_id, nom, prenom, classe)
+
+        self.parent.refresh_table()
         self.destroy()
 
 
@@ -205,8 +225,8 @@ class NoteForm(tk.Toplevel):
         ttk.Button(button_frame, text=save_text, command=self.save_note, style='Primary.TButton').pack(side='right', padx=5)
 
     def update_eleve_list(self):
-        # Placeholder for updating élève list
-        pass
+        eleves = db.get_eleves()
+        self.eleve_combobox['values'] = [f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})" for eleve in eleves]
 
     def center_window(self):
         self.update_idletasks()
@@ -217,14 +237,21 @@ class NoteForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def load_note_data(self):
-        # Placeholder for loading note data
-        pass
+        if self.eleve_combobox.get() != "":
+            eleve_id = self.eleve_combobox.get().split(" ")[0]
+            notes = db.get_notes(eleve_id)
+            if notes:
+                self.note_var.set(notes[0]['note'])
 
     def save_note(self):
-        # Placeholder for saving note
-        print("TODO: save_note")
-        self.destroy()
-
+        if self.eleve_combobox.get() != "" and self.matiere_var.get() != "" and self.note_var.get() != "":
+            eleve_id = self.eleve_combobox.get().split(" ")[0]
+            matiere = self.matiere_var.get()
+            note = self.note_var.get()
+            db.add_notes(eleve_id, matiere, note)
+            self.destroy()
+        else:
+            messagebox.showerror("Erreur", "Veuillez remplir tous les champs")
 
 class AbsenceForm(tk.Toplevel):
     def __init__(self, parent, eleve_id=None):
@@ -555,8 +582,14 @@ class GestionNotesAbsencesApp(tk.Tk):
         return []
 
     def refresh_table(self):
-        # Placeholder for refreshing the table
-        print("TODO: refresh_table")
+        self.tree.delete(*self.tree.get_children())
+        eleves = db.show_table()
+        for eleve in eleves:
+            eleve_list = list(eleve)
+            if eleve_list:
+                eleve_list[-1] = f"{eleve_list[-1]}%"
+            self.tree.insert('', 'end', values=tuple(eleve_list))
+        self.count_label.config(text=f"{len(eleves)} élèves")
 
     def reset_filters(self):
         self.classe_filter.set('')
@@ -577,16 +610,32 @@ class GestionNotesAbsencesApp(tk.Tk):
             self.edit_selected_student()
 
     def edit_selected_student(self):
-        # Placeholder for editing selected student
-        print("TODO: edit_selected_student")
+        selected = self.tree.selection()
+        if selected:
+            eleve_id = self.tree.item(selected[0])['values'][0]
+            EleveForm(self, eleve_id)
+
 
     def delete_selected_student(self):
-        # Placeholder for deleting selected student
-        print("TODO: delete_selected_student")
+        selected = self.tree.selection()
+        if selected:
+            eleve_id = self.tree.item(selected[0])['values'][0]
+            if messagebox.askyesno("Confirmation", "Supprimer cet élève?"):
+                db.delete_eleve(eleve_id)
+                self.refresh_table()
 
     def view_student_notes(self):
-        # Placeholder for viewing student notes
-        print("TODO: view_student_notes")
+        selected = self.tree.selection()
+        if selected:
+            eleve_id = self.tree.item(selected[0])['values'][0]
+            notes = db.get_notes(eleve_id)
+            student_data = {
+                'id': eleve_id,
+                'nom': self.tree.item(selected[0])['values'][1],
+                'prenom': self.tree.item(selected[0])['values'][2],
+                'classe': self.tree.item(selected[0])['values'][3]
+            }
+            NotesViewDialog(self, student_data, notes)
 
     def view_student_absences(self):
         # Placeholder for viewing student absences
@@ -860,16 +909,16 @@ class AbsencesViewDialog(tk.Toplevel):
         button_frame.pack(fill='x', pady=(20, 0))
         
         ttk.Button(button_frame, text="Ajouter une absence", 
-                  command=self.add_absence, 
-                  style='Primary.TButton').pack(side='left', padx=5)
-                  
+                    command=self.add_absence, 
+                    style='Primary.TButton').pack(side='left', padx=5)
+
         ttk.Button(button_frame, text="Supprimer l'absence sélectionnée", 
-                  command=self.delete_selected_absence, 
-                  style='Primary.TButton').pack(side='left', padx=5)
-                  
+                    command=self.delete_selected_absence, 
+                    style='Primary.TButton').pack(side='left', padx=5)
+
         ttk.Button(button_frame, text="Fermer", 
-                  command=self.destroy, 
-                  style='Primary.TButton').pack(side='right', padx=5)
+                    command=self.destroy, 
+                    style='Primary.TButton').pack(side='right', padx=5)
 
     def center_window(self):
         self.update_idletasks()
@@ -888,7 +937,3 @@ class AbsencesViewDialog(tk.Toplevel):
         # Placeholder for deleting selected absence
         print("TODO: delete_selected_absence")
         self.destroy()
-
-if __name__ == '__main__':
-    app = GestionNotesAbsencesApp()
-    app.mainloop()
