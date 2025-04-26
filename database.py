@@ -38,7 +38,7 @@ def show_table():
                         e.classe,
                         (SELECT avg(note) FROM notes WHERE eleve_id = e.id) as moyenne,
                         (SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id) as absences,
-                        ROUND(100.0 * (200 - IFNULL((SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id), 0)) / 200, 2) as taux_assiduite
+                        ROUND(100.0 * (30 - IFNULL((SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id), 0)) / 30, 2) as taux_assiduite
                     FROM eleves as e
                 """)
     data = cursor.fetchall()
@@ -74,7 +74,7 @@ def get_eleves():
     conn.close()
     return data
 
-def add_note(eleve_id, matiere, note):
+def add_notes(eleve_id, matiere, note):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO notes (eleve_id, matiere, note) VALUES (?, ?, ?)", (eleve_id, matiere, note))
