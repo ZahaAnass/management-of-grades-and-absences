@@ -743,7 +743,7 @@ class NotesViewDialog(tk.Toplevel):
                     style='TLabel').pack()
         
         # Calculate average
-        notes_values = [note[1] for note in self.student_notes]
+        notes_values = [note[2] for note in self.student_notes]
         avg = calculate_average(notes_values)
         # :.2f is a format specifier that formats a float to 2 decimal places
         avg_text = f"{avg:.2f}" if avg is not None else "Aucune note"
@@ -760,30 +760,31 @@ class NotesViewDialog(tk.Toplevel):
         scrollbar.pack(side='right', fill='y')
         
         # Table
-        columns = ("Matière", "Note", "ID")
-        self.notes_tree = ttk.Treeview(table_frame, columns=columns, show='headings',
-                                        yscrollcommand=scrollbar.set)
+        columns = ("ID", "Matière", "Note", "Date")
+        self.notes_tree = ttk.Treeview(table_frame, columns=columns, show='headings', yscrollcommand=scrollbar.set)
         
-        self.notes_tree.column("Matière", width=300, anchor='w')
-        self.notes_tree.column("Note", width=100, anchor='center')
-        self.notes_tree.column("ID", width=100, anchor='center')
-        
+        self.notes_tree.column("ID", width=80, anchor='center')
+        self.notes_tree.column("Matière", width=180, anchor='w')
+        self.notes_tree.column("Note", width=80, anchor='center')
+        self.notes_tree.column("Date", width=120, anchor='center')
+
+        self.notes_tree.heading("ID", text="ID")
         self.notes_tree.heading("Matière", text="Matière")
         self.notes_tree.heading("Note", text="Note")
-        self.notes_tree.heading("ID", text="ID")
+        self.notes_tree.heading("Date", text="Date")
         
         self.notes_tree.pack(fill='both', expand=True)
         scrollbar.config(command=self.notes_tree.yview)
         
         # Fill table
         for note in self.student_notes:
-            self.notes_tree.insert('', 'end', values=(note[0], note[1], note[2]))
+            self.notes_tree.insert('', 'end', values=(note[0], note[1], note[2], note[3]))
         
         # Buttons
         button_frame = ttk.Frame(main_frame, style='Card.TFrame')
         button_frame.pack(fill='x', pady=(20, 0))
         
-        ttk.Button(button_frame, text="Ajouter une note", 
+        ttk.Button(button_frame, text="Modifier la note selectionnée",
                     command=self.update_note, 
                     style='Primary.TButton').pack(side='left', padx=5)
 
@@ -801,31 +802,30 @@ class NotesViewDialog(tk.Toplevel):
         height = self.winfo_height()
         x = (self.winfo_screenwidth() // 2) - (width // 2)
         y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+        self.geometry('{}x{}+{}+{}'.format(width + 200, height + 70, x - 100, y - 50))
 
     def update_note(self):
-        # selected_item = self.notes_tree.selection()[0]
-        # if not selected_item:
-        #     return
-        # item = self.notes_tree.item(selected_item)
-        # values = item['values']
-        # note_id = values[2]
-        # new_note = float(self.note_entry.get())
-        # update_note(note_id, new_note)
-        print("TODO: update_note")
+        selected_note = self.notes_tree.selection()[0]
+        if not selected_note:
+            messagebox.showerror("Erreur", "Aucune note sélectionnée")
+            return
+        note_id = self.notes_tree.item(selected_note[0])['values'][0]
+        NoteForm(self, note_id)
         self.destroy()
+        self.parent.refresh_table()
 
     def delete_selected_note(self):
-        # selected_item = self.notes_tree.selection()[0]
-        # if not selected_item:
-        #     return
-        # item = self.notes_tree.item(selected_item)
-        # values = item['values']
-        # note_id = values[2]
-        # db.delete_note(note_id)
-        # self.destroy()
-        print("TODO: delete_selected_note")
-        self.destroy()
+        selected_note = self.notes_tree.selection()[0]
+        if not selected_note:
+            messagebox.showerror("Erreur", "Aucune note sélectionnée")
+            return
+        note_id = self.notes_tree.item(selected_note)['values'][0]
+        if messagebox.askyesno("Confirmation", "Êtes-vous sûr de vouloir supprimer cette note?", parent=self):
+            db.delete_note(note_id)
+            self.notes_tree.delete(selected_note)
+            self.parent.refresh_table()
+            self.destroy()
+            messagebox.showinfo("Succès", "Note supprimée avec succès")
 
 
 class AbsencesViewDialog(tk.Toplevel):
