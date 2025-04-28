@@ -84,11 +84,12 @@ def add_notes(eleve_id, matiere, note):
 def get_notes(eleve_id):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT matiere, note, date_note FROM notes WHERE eleve_id=? ORDER BY date_note DESC", (eleve_id,))
+    cursor.execute("SELECT id ,matiere, note, date_note FROM notes WHERE eleve_id=? ORDER BY date_note DESC", (eleve_id,))
     data = cursor.fetchall()
     conn.close()
     return data
 
+# Modify Update a note
 def update_note(note_id, note):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
@@ -119,14 +120,34 @@ def get_absences(eleve_id):
     return data
 
 def init_sample_data():
+    import random
+    from datetime import datetime, timedelta
     if not get_eleves():
-        add_eleve("Dupont", "Alice", "6A")
-        add_eleve("Martin", "Lucas", "5B")
-        add_note(1, "Maths", 17)
-        add_note(1, "Français", 14)
-        add_note(2, "Maths", 13)
-        add_absence(1, "2024-04-08", 1)
-        add_absence(2, "2024-04-15", 2)
+        first_names = ["Alice", "Lucas", "Emma", "Hugo", "Léa", "Louis", "Chloé", "Gabriel", "Manon", "Nathan"]
+        last_names = ["Dupont", "Martin", "Bernard", "Petit", "Durand", "Leroy", "Moreau", "Simon", "Laurent", "Lefebvre"]
+        classes = ["6A", "6B", "5A", "5B", "4A", "4B", "3A", "3B"]
+        subjects = ["Maths", "Français", "Anglais", "Histoire", "SVT", "Physique"]
+        # Insert 50 students
+        for _ in range(50):
+            nom = random.choice(last_names)
+            prenom = random.choice(first_names)
+            classe = random.choice(classes)
+            add_eleve(nom, prenom, classe)
+        eleves = get_eleves()
+        for eleve in eleves:
+            eleve_id = eleve[0] if isinstance(eleve, (list, tuple)) and len(eleve) > 0 else eleve
+            # Add 3-5 notes per student
+            for _ in range(random.randint(3, 5)):
+                matiere = random.choice(subjects)
+                note = round(random.uniform(8, 20), 2)
+                add_notes(eleve_id, matiere, note)
+            # Add 0-2 absences per student
+            for _ in range(random.randint(0, 2)):
+                days_ago = random.randint(1, 60)
+                date_absence = (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+                nb_jours = random.randint(1, 3)
+                add_absence(eleve_id, date_absence, nb_jours)
+        print('50 record added')
 
 create_table()
 init_sample_data()
