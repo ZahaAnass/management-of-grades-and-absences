@@ -7,8 +7,8 @@ from utils import *
 # Colors and styling constants for theme
 COLORS = {
     'primary': '#3f51b5',     # Indigo
-    'primary_light': '#757de8',
-    'primary_dark': '#002984',
+    'primary_light': '#757de8', # Lighter Indigo
+    'primary_dark': '#002984', # Darker Indigo
     'secondary': '#ff4081',   # Pink
     'background': '#f5f5f5',  # Light grey
     'card': '#ffffff',        # White
@@ -126,7 +126,7 @@ class EleveForm(tk.Toplevel):
         classe = self.classe_var.get()
         
         if not (nom and prenom and classe):
-            messagebox.showerror("Erreur", "Tous les champs sont obligatoires")
+            messagebox.showerror("Erreur", "Tous les champs sont obligatoires", parent=self)
             return
         
         if self.eleve_id is None:
@@ -139,13 +139,12 @@ class EleveForm(tk.Toplevel):
 
 
 class NoteForm(tk.Toplevel):
-    def __init__(self, parent, eleve_id=None, matiere=None):
+    def __init__(self, parent, note_id=None):
         super().__init__(parent)
         self.parent = parent
-        self.eleve_id = eleve_id
-        self.matiere = matiere
+        self.note_id = note_id
         
-        self.title("Ajouter une note" if matiere is None else "Modifier une note")
+        self.title("Ajouter une note" if note_id is None else "Modifier une note")
         self.geometry("500x400")
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
@@ -155,8 +154,8 @@ class NoteForm(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         
-        # Load data if editing
-        if eleve_id is not None and matiere is not None:
+        # Load data if editing mode
+        if note_id is not None:
             self.load_note_data()
 
     def setup_fonts(self):
@@ -175,25 +174,25 @@ class NoteForm(tk.Toplevel):
         
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                            background=COLORS['primary'],
+                            foreground=COLORS['button_text'],
+                            font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
         
         style.configure('Secondary.TButton', 
-                         background=COLORS['secondary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                            background=COLORS['secondary'],
+                            foreground=COLORS['button_text'],
+                            font=self.button_font)
         style.map('Secondary.TButton',
-                  background=[('active', COLORS['secondary'])])
+                    background=[('active', COLORS['secondary'])])
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, style='Card.TFrame', padding=20)
         main_frame.pack(fill='both', expand=True, padx=20, pady=20)
         
         # Title
-        title_text = "Ajouter une note" if self.matiere is None else "Modifier une note"
+        title_text = "Ajouter une note" if self.note_id is None else "Modifier une note"
         ttk.Label(main_frame, text=title_text, style='Title.TLabel').pack(pady=(0, 20))
         
         # Form fields
@@ -209,19 +208,21 @@ class NoteForm(tk.Toplevel):
         # Matière
         ttk.Label(form_frame, text="Matière:", style='TLabel').grid(row=1, column=0, sticky='w', padx=5, pady=10)
         self.matiere_var = tk.StringVar()
-        ttk.Entry(form_frame, textvariable=self.matiere_var, width=30, font=self.normal_font).grid(row=1, column=1, padx=5, pady=10)
+        self.matiere_entry = ttk.Entry(form_frame, textvariable=self.matiere_var, width=30, font=self.normal_font)
+        self.matiere_entry.grid(row=1, column=1, padx=5, pady=10)
         
         # Note
         ttk.Label(form_frame, text="Note:", style='TLabel').grid(row=2, column=0, sticky='w', padx=5, pady=10)
         self.note_var = tk.StringVar()
-        ttk.Entry(form_frame, textvariable=self.note_var, width=10, font=self.normal_font).grid(row=2, column=1, sticky='w', padx=5, pady=10)
+        self.note_entry = ttk.Entry(form_frame, textvariable=self.note_var, width=10, font=self.normal_font)
+        self.note_entry.grid(row=2, column=1, sticky='w', padx=5, pady=10)
         
         # Buttons
         button_frame = ttk.Frame(main_frame, style='Card.TFrame')
         button_frame.pack(fill='x', pady=(20, 0))
         
         ttk.Button(button_frame, text="Annuler", command=self.destroy, style='Secondary.TButton').pack(side='right', padx=5)
-        save_text = "Ajouter" if self.matiere is None else "Enregistrer"
+        save_text = "Ajouter" if self.note_id is None else "Modifier"
         ttk.Button(button_frame, text=save_text, command=self.save_note, style='Primary.TButton').pack(side='right', padx=5)
 
     def update_eleve_list(self):
@@ -237,21 +238,42 @@ class NoteForm(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
     def load_note_data(self):
-        if self.eleve_combobox.get() != "":
-            eleve_id = self.eleve_combobox.get().split(" ")[0]
-            notes = db.get_notes(eleve_id)
-            if notes:
-                self.note_var.set(notes[0]['note'])
+        note_data = db.get_note_by_id(self.note_id)
+        if note_data:
+            eleve_id = note_data[1]
+            eleves = db.get_eleves()
+            print(eleve_id)
+            print(eleves)
+            # Find the eleve with the matching ID
+            for eleve in eleves:
+                if eleve[0] == eleve_id:
+                    self.eleve_combobox.set(f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})")
+                    break
+            self.matiere_var.set(note_data[2])
+            self.note_var.set(note_data[3])
+            # Optionally set readonly if you want to prevent editing
+            # self.eleve_combobox['state'] = 'readonly'
+            # self.matiere_entry['state'] = 'readonly'
+            # self.note_entry['state'] = 'readonly'
+        else:
+            messagebox.showerror("Erreur", "Note non trouvée", parent=self.parent)
+            self.destroy()
 
     def save_note(self):
         if self.eleve_combobox.get() != "" and self.matiere_var.get() != "" and self.note_var.get() != "":
-            eleve_id = self.eleve_combobox.get().split(" ")[0]
+            eleve_id = int(self.eleve_combobox.get().split("(ID: ")[1].split(")")[0])
             matiere = self.matiere_var.get()
             note = self.note_var.get()
-            db.add_notes(eleve_id, matiere, note)
+            
+            if self.note_id is None:
+                db.add_notes(eleve_id, matiere, note)
+            else:
+                db.update_note(self.note_id, eleve_id, matiere, note)
+            
             self.destroy()
+            self.parent.refresh_table()
         else:
-            messagebox.showerror("Erreur", "Veuillez remplir tous les champs")
+            messagebox.showerror("Erreur", "Veuillez remplir tous les champs", parent=self)
 
 class AbsenceForm(tk.Toplevel):
     def __init__(self, parent, eleve_id=None):
@@ -638,8 +660,17 @@ class GestionNotesAbsencesApp(tk.Tk):
             NotesViewDialog(self, student_data, notes)
 
     def view_student_absences(self):
-        # Placeholder for viewing student absences
-        print("TODO: view_student_absences")
+        selected = self.tree.selection()
+        if selected:
+            eleve_id = self.tree.item(selected[0])['values'][0]
+            absences = db.get_absences(eleve_id)
+            student_data = {
+                'id': eleve_id,
+                'nom': self.tree.item(selected[0])['values'][1],
+                'prenom': self.tree.item(selected[0])['values'][2],
+                'classe': self.tree.item(selected[0])['values'][3]
+            }
+            AbsencesViewDialog(self, student_data, absences)
 
     def export_csv_ui(self):
         # Placeholder for exporting CSV
@@ -805,24 +836,28 @@ class NotesViewDialog(tk.Toplevel):
         self.geometry('{}x{}+{}+{}'.format(width + 200, height + 70, x - 100, y - 50))
 
     def update_note(self):
-        selected_note = self.notes_tree.selection()[0]
+        selected_note = self.notes_tree.selection()
         if not selected_note:
-            messagebox.showerror("Erreur", "Aucune note sélectionnée")
+            messagebox.showerror("Erreur", "Aucune note sélectionnée", parent=self)
             return
         note_id = self.notes_tree.item(selected_note[0])['values'][0]
-        NoteForm(self, note_id)
-        self.destroy()
+        
+        # Open the NoteForm properly and wait
+        form = NoteForm(self, note_id)
+        self.wait_window(form)  # <<<<<< Wait until the NoteForm is closed
+        
         self.parent.refresh_table()
+        self.destroy()
 
     def delete_selected_note(self):
-        selected_note = self.notes_tree.selection()[0]
+        selected_note = self.notes_tree.selection()
         if not selected_note:
-            messagebox.showerror("Erreur", "Aucune note sélectionnée")
+            messagebox.showerror("Erreur", "Aucune note sélectionnée", parent=self)
             return
-        note_id = self.notes_tree.item(selected_note)['values'][0]
-        if messagebox.askyesno("Confirmation", "Êtes-vous sûr de vouloir supprimer cette note?", parent=self):
+        note_id = self.notes_tree.item(selected_note[0])['values'][0]
+        if messagebox.askyesno("Confirmation", "Êtes-vous sûr de vouloir supprimer cette note ?", parent=self):
             db.delete_note(note_id)
-            self.notes_tree.delete(selected_note)
+            self.notes_tree.delete(selected_note[0])
             self.parent.refresh_table()
             self.destroy()
             messagebox.showinfo("Succès", "Note supprimée avec succès")
@@ -871,11 +906,11 @@ class AbsencesViewDialog(tk.Toplevel):
                         
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                            background=COLORS['primary'],
+                            foreground=COLORS['button_text'],
+                            font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, style='Card.TFrame', padding=20)
@@ -886,17 +921,17 @@ class AbsencesViewDialog(tk.Toplevel):
         info_frame.pack(fill='x', pady=(0, 20))
         
         ttk.Label(info_frame, text=f"Absences de {self.student['prenom']} {self.student['nom']}", 
-                 style='Title.TLabel').pack(pady=(0, 10))
-                 
+                    style='Title.TLabel').pack(pady=(0, 10))
+
         ttk.Label(info_frame, text=f"Classe: {self.student['classe']} | ID: {self.student['id']}",
-                 style='TLabel').pack()
+                    style='TLabel').pack()
         
         # Absences count and rate
-        n_abs = len(self.student_absences)
-        taux = attendance_rate(200, n_abs)  # Assume 200 days/year
+        nbr_abs = len(self.student_absences)
+        taux = attendance_rate(30, nbr_abs)  # If We Have 30 days/month
         
-        ttk.Label(info_frame, text=f"Nombre d'absences: {n_abs} | Taux d'assiduité: {taux}%",
-                 style='TLabel').pack(pady=(5, 0))
+        ttk.Label(info_frame, text=f"Nombre d'absences: {nbr_abs} | Taux d'assiduité: {taux}%",
+                    style='TLabel').pack(pady=(5, 0))
         
         # Absences table
         table_frame = ttk.Frame(main_frame, style='Card.TFrame')
@@ -905,29 +940,36 @@ class AbsencesViewDialog(tk.Toplevel):
         # Scrollbar
         scrollbar = ttk.Scrollbar(table_frame)
         scrollbar.pack(side='right', fill='y')
-        
+
         # Table
-        columns = ("Date",)
-        self.absences_tree = ttk.Treeview(table_frame, columns=columns, show='headings',
-                                         yscrollcommand=scrollbar.set)
-        
-        self.absences_tree.column("Date", width=400, anchor='center')
+        columns = ("ID", "Nombre Absences", "Date")
+        self.absences_tree = ttk.Treeview(
+            table_frame, columns=columns, show='headings', yscrollcommand=scrollbar.set
+        )
+
+        self.absences_tree.column("ID", width=100, anchor='center')
+        self.absences_tree.heading("ID", text="ID")
+
+        self.absences_tree.column("Nombre Absences", width=120, anchor='center')
+        self.absences_tree.heading("Nombre Absences", text="Nombre d'absences")
+
+        self.absences_tree.column("Date", width=250, anchor='center')
         self.absences_tree.heading("Date", text="Date de l'absence")
-        
+
         self.absences_tree.pack(fill='both', expand=True)
         scrollbar.config(command=self.absences_tree.yview)
-        
+
         # Fill table
-        for absence in sorted(self.student_absences, key=lambda a: a['date']):
-            self.absences_tree.insert('', 'end', values=(absence['date'],))
+        for absence in self.student_absences:
+            self.absences_tree.insert('', 'end', values=(absence[0], absence[1], absence[2]))
         
         # Buttons
         button_frame = ttk.Frame(main_frame, style='Card.TFrame')
         button_frame.pack(fill='x', pady=(20, 0))
         
-        ttk.Button(button_frame, text="Ajouter une absence", 
-                    command=self.add_absence, 
-                    style='Primary.TButton').pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Modifier l'absence sélectionnée", 
+                command=self.modifier_absence, 
+                style='Primary.TButton').pack(side='left', padx=5)
 
         ttk.Button(button_frame, text="Supprimer l'absence sélectionnée", 
                     command=self.delete_selected_absence, 
@@ -943,14 +985,27 @@ class AbsencesViewDialog(tk.Toplevel):
         height = self.winfo_height()
         x = (self.winfo_screenwidth() // 2) - (width // 2)
         y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+        self.geometry('{}x{}+{}+{}'.format(width + 200, height + 70, x - 100, y - 50))
 
-    def add_absence(self):
-        # Placeholder for adding absence
-        print("TODO: add_absence")
+    def modifier_absence(self):
+        selected_absence = self.absences_tree.selection()
+        if not selected_absence:
+            messagebox.showerror("Erreur", "Aucune absence sélectionnée", parent=self)
+            return
+        absence_id = self.absences_tree.item(selected_absence[0])['values'][0]
+        AbsenceForm(self, absence_id)
+        self.parent.refresh_table()
         self.destroy()
 
     def delete_selected_absence(self):
-        # Placeholder for deleting selected absence
-        print("TODO: delete_selected_absence")
-        self.destroy()
+        selected_absence = self.absences_tree.selection()
+        if not selected_absence:
+            messagebox.showerror("Erreur", "Aucune absence sélectionnée", parent=self)
+            return
+        absence_id = self.absences_tree.item(selected_absence[0])['values'][0]
+        if messagebox.askyesno("Confirmation", "Êtes-vous sûr de vouloir supprimer cette absence?", parent=self):
+            db.delete_absence(absence_id)
+            self.absences_tree.delete(selected_absence[0])
+            self.parent.refresh_table()
+            self.destroy()
+            messagebox.showinfo("Succès", "Absence supprimée avec succès")
