@@ -36,7 +36,7 @@ def show_table():
                         e.nom,
                         e.prenom,
                         e.classe,
-                        (SELECT avg(note) FROM notes WHERE eleve_id = e.id) as moyenne,
+                        (SELECT ROUND(avg(note), 2) FROM notes WHERE eleve_id = e.id) as moyenne,
                         (SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id) as absences,
                         ROUND(100.0 * (30 - IFNULL((SELECT sum(nb_jours) FROM absences WHERE eleve_id = e.id), 0)) / 30, 2) as taux_assiduite
                     FROM eleves as e
@@ -161,7 +161,7 @@ def init_sample_data():
     from datetime import datetime, timedelta
     if not get_eleves():
         first_names = ["Alice", "Lucas", "Emma", "Hugo", "Léa", "Louis", "Chloé", "Gabriel", "Manon", "Nathan"]
-        last_names = ["Dupont", "Martin", "Bernard", "Petit", "Durand", "Leroy", "Moreau", "Simon", "Laurent", "Lefebvre"]
+        last_names = ["Dupont", "Martin", "Bernard", "Petit", "Durand", "Leroy", "Moreau", "Simon", "Laurent", "Rousseau"]
         classes = ["6A", "6B", "5A", "5B", "4A", "4B", "3A", "3B"]
         subjects = ["Maths", "Français", "Anglais", "Histoire", "SVT", "Physique"]
         # Insert 50 students
