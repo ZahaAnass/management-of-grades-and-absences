@@ -242,19 +242,15 @@ class NoteForm(tk.Toplevel):
         if note_data:
             eleve_id = note_data[1]
             eleves = db.get_eleves()
-            print(eleve_id)
-            print(eleves)
-            # Find the eleve with the matching ID
             for eleve in eleves:
                 if eleve[0] == eleve_id:
                     self.eleve_combobox.set(f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})")
+                    self.eleve_combobox.config(state='disabled')
                     break
             self.matiere_var.set(note_data[2])
             self.note_var.set(note_data[3])
-            # Optionally set readonly if you want to prevent editing
-            # self.eleve_combobox['state'] = 'readonly'
-            # self.matiere_entry['state'] = 'readonly'
-            # self.note_entry['state'] = 'readonly'
+            # Make the fields readonly
+            self.matiere_entry['state'] = 'readonly'
         else:
             messagebox.showerror("Erreur", "Note non trouvée", parent=self.parent)
             self.destroy()
@@ -268,10 +264,10 @@ class NoteForm(tk.Toplevel):
             if self.note_id is None:
                 db.add_notes(eleve_id, matiere, note)
             else:
-                db.update_note(self.note_id, eleve_id, matiere, note)
+                db.update_note(self.note_id, eleve_id, note)
             
+            self.parent.parent.refresh_table()
             self.destroy()
-            self.parent.refresh_table()
         else:
             messagebox.showerror("Erreur", "Veuillez remplir tous les champs", parent=self)
 
@@ -307,18 +303,18 @@ class AbsenceForm(tk.Toplevel):
         
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['primary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
         
         style.configure('Secondary.TButton', 
-                         background=COLORS['secondary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['secondary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Secondary.TButton',
-                  background=[('active', COLORS['secondary'])])
+                    background=[('active', COLORS['secondary'])])
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, style='Card.TFrame', padding=20)
@@ -408,39 +404,39 @@ class GestionNotesAbsencesApp(tk.Tk):
                         background=COLORS['primary'],
                         foreground=COLORS['button_text'])
         style.map('Treeview.Heading',
-                 background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
         style.map('Treeview',
-                 background=[('selected', COLORS['primary_light'])],
-                 foreground=[('selected', COLORS['text'])])
-                 
+                    background=[('selected', COLORS['primary_light'])],
+                    foreground=[('selected', COLORS['text'])])
+        
         # Button styles
         style.configure('Primary.TButton', 
-                         background=COLORS['primary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['primary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Primary.TButton',
-                  background=[('active', COLORS['primary_light'])])
+                    background=[('active', COLORS['primary_light'])])
         
         style.configure('Secondary.TButton', 
-                         background=COLORS['secondary'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['secondary'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Secondary.TButton',
-                  background=[('active', COLORS['secondary'])])
-                  
+                    background=[('active', COLORS['secondary'])])
+        
         style.configure('Warning.TButton', 
-                         background=COLORS['warning'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['warning'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Warning.TButton',
-                  background=[('active', COLORS['warning'])])
-                  
+                    background=[('active', COLORS['warning'])])
+        
         style.configure('Danger.TButton', 
-                         background=COLORS['error'],
-                         foreground=COLORS['button_text'],
-                         font=self.button_font)
+                        background=COLORS['error'],
+                        foreground=COLORS['button_text'],
+                        font=self.button_font)
         style.map('Danger.TButton',
-                  background=[('active', COLORS['error'])])
+                    background=[('active', COLORS['error'])])
 
     def create_widgets(self):
         # Main container with two columns
@@ -469,8 +465,8 @@ class GestionNotesAbsencesApp(tk.Tk):
         ttk.Label(eleves_panel, text="Gestion des Élèves", style='Subtitle.TLabel').pack(pady=(10, 15), padx=10)
         
         ttk.Button(eleves_panel, text="Ajouter un élève", 
-                  command=lambda: EleveForm(self), 
-                  style='Primary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=lambda: EleveForm(self), 
+                    style='Primary.TButton').pack(fill='x', padx=10, pady=5)
         
         ttk.Button(eleves_panel, text="Modifier l'élève sélectionné", 
                   command=self.edit_selected_student, 
@@ -636,7 +632,6 @@ class GestionNotesAbsencesApp(tk.Tk):
         if selected:
             eleve_id = self.tree.item(selected[0])['values'][0]
             EleveForm(self, eleve_id)
-
 
     def delete_selected_student(self):
         selected = self.tree.selection()
