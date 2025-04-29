@@ -525,12 +525,12 @@ class GestionNotesAbsencesApp(tk.Tk):
                     style='Primary.TButton').pack(fill='x', padx=10, pady=5)
         
         ttk.Button(eleves_panel, text="Modifier l'élève sélectionné", 
-                  command=self.edit_selected_student, 
-                  style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=self.edit_selected_student, 
+                    style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
         
         ttk.Button(eleves_panel, text="Supprimer l'élève sélectionné", 
-                  command=self.delete_selected_student, 
-                  style='Danger.TButton').pack(fill='x', padx=10, pady=5)
+                    command=self.delete_selected_student, 
+                    style='Danger.TButton').pack(fill='x', padx=10, pady=5)
         
         # Notes panel
         notes_panel = ttk.Frame(self.command_frame, style='Card.TFrame')
@@ -539,12 +539,12 @@ class GestionNotesAbsencesApp(tk.Tk):
         ttk.Label(notes_panel, text="Gestion des Notes", style='Subtitle.TLabel').pack(pady=(10, 15), padx=10)
         
         ttk.Button(notes_panel, text="Ajouter une note", 
-                  command=lambda: NoteForm(self), 
-                  style='Primary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=lambda: NoteForm(self), 
+                    style='Primary.TButton').pack(fill='x', padx=10, pady=5)
         
         ttk.Button(notes_panel, text="Voir les notes de l'élève", 
-                  command=self.view_student_notes, 
-                  style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=self.view_student_notes, 
+                    style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
         
         # Absences panel
         absences_panel = ttk.Frame(self.command_frame, style='Card.TFrame')
@@ -553,12 +553,12 @@ class GestionNotesAbsencesApp(tk.Tk):
         ttk.Label(absences_panel, text="Gestion des Absences", style='Subtitle.TLabel').pack(pady=(10, 15), padx=10)
         
         ttk.Button(absences_panel, text="Enregistrer une absence", 
-                  command=lambda: AbsenceForm(self), 
-                  style='Primary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=lambda: AbsenceForm(self), 
+                    style='Primary.TButton').pack(fill='x', padx=10, pady=5)
         
         ttk.Button(absences_panel, text="Voir les absences de l'élève", 
-                  command=self.view_student_absences, 
-                  style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
+                    command=self.view_student_absences, 
+                    style='Secondary.TButton').pack(fill='x', padx=10, pady=5)
 
     def create_display_panels(self):
         # Search and filter panel
@@ -572,12 +572,12 @@ class GestionNotesAbsencesApp(tk.Tk):
         ttk.Label(top_row, text="Filtres et Recherche", style='Subtitle.TLabel').pack(side='left')
         
         ttk.Button(top_row, text="Exporter PDF", 
-                  command=self.export_pdf_ui, 
-                  style='Secondary.TButton').pack(side='right', padx=(5, 0))
-                  
+                    command=self.export_pdf_ui, 
+                    style='Secondary.TButton').pack(side='right', padx=(5, 0))
+
         ttk.Button(top_row, text="Exporter CSV", 
-                  command=self.export_csv_ui, 
-                  style='Secondary.TButton').pack(side='right', padx=5)
+                    command=self.export_csv_ui, 
+                    style='Secondary.TButton').pack(side='right', padx=5)
         
         # Search and filter controls
         controls_frame = ttk.Frame(filter_panel, style='Card.TFrame')
@@ -595,8 +595,8 @@ class GestionNotesAbsencesApp(tk.Tk):
         search_entry.bind('<KeyRelease>', lambda e: self.refresh_table())
         
         ttk.Button(controls_frame, text="Réinitialiser", 
-                  command=self.reset_filters, 
-                  style='Primary.TButton').pack(side='left', padx=20)
+                    command=self.reset_filters, 
+                    style='Primary.TButton').pack(side='left', padx=20)
         
         # Table panel
         table_panel = ttk.Frame(self.display_frame, style='Card.TFrame')
@@ -652,33 +652,48 @@ class GestionNotesAbsencesApp(tk.Tk):
         self.count_label.pack(side='right', padx=10, pady=5)
 
     def get_classes(self):
-        # Placeholder for getting classes
-        return []
+        return db.get_classes()
 
     def refresh_table(self):
         self.tree.delete(*self.tree.get_children())
-        eleves = db.show_table()
+        eleves = db.show_table()  # Get all students
+
+        selected_class = self.classe_filter.get()
+        search_text = self.search_var.get().strip().lower()
+
+        filtered_eleves = []
         for eleve in eleves:
-            eleve_list = list(eleve)
-            if eleve_list:
-                eleve_list[-1] = f"{eleve_list[-1]}%"
-            self.tree.insert('', 'end', values=tuple(eleve_list))
-        self.count_label.config(text=f"{len(eleves)} élèves")
+            # Each eleve = (ID, Nom, Prénom, Classe, Moyenne, Absences, Taux)
+            matches_class = (not selected_class or eleve[3] == selected_class)
+            matches_search = (
+                not search_text or
+                search_text in str(eleve[1]).lower() or
+                search_text in str(eleve[2]).lower()
+            )
+            if matches_class and matches_search:
+                eleve_list = list(eleve)
+                if eleve_list:
+                    eleve_list[-1] = f"{eleve_list[-1]}%"
+                filtered_eleves.append(eleve_list)
+                self.tree.insert('', 'end', values=tuple(eleve_list))
+
+        self.count_label.config(text=f"{len(filtered_eleves)} élèves")
 
     def reset_filters(self):
         self.classe_filter.set('')
         self.search_var.set('')
         self.refresh_table()
+        self.status_label.config(text="Prêt")
 
     def on_tree_select(self, event):
-        # This is called when a row is selected
         selected = self.tree.selection()
         if selected:
             # Update status bar
-            self.status_label.config(text=f"Élève sélectionné: ID {selected[0]}")
+            item = self.tree.item(selected[0])
+            student_id = item['values'][0]
+            self.status_label.config(text=f"Élève sélectionné: ID: {student_id}")
 
     def on_tree_double_click(self, event):
-        # This is called when a row is double-clicked
         selected = self.tree.selection()
         if selected:
             self.edit_selected_student()
