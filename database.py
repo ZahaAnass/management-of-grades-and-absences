@@ -148,6 +148,14 @@ def modify_absence(absence_id, date_absence, nb_jours):
     conn.commit()
     conn.close()
 
+def get_classes():
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT classe FROM eleves")
+    data = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in data] # Cause this data is an tuple We Need To Get The Value At Index 0
+
 def init_sample_data():
     import random
     from datetime import datetime, timedelta
