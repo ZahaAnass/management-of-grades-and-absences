@@ -126,6 +126,14 @@ def get_absences(eleve_id):
     conn.close()
     return data
 
+def get_absence_by_id(absence_id):
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT eleve_id, date_absence, nb_jours FROM absences WHERE id=?", (absence_id,))
+    data = cursor.fetchone()
+    conn.close()
+    return data
+
 def delete_absence(absence_id):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
