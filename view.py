@@ -225,10 +225,6 @@ class NoteForm(tk.Toplevel):
         save_text = "Ajouter" if self.note_id is None else "Modifier"
         ttk.Button(button_frame, text=save_text, command=self.save_note, style='Primary.TButton').pack(side='right', padx=5)
 
-    def update_eleve_list(self):
-        eleves = db.get_eleves()
-        self.eleve_combobox['values'] = [f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})" for eleve in eleves]
-
     def center_window(self):
         self.update_idletasks()
         width = self.winfo_width()
@@ -236,6 +232,10 @@ class NoteForm(tk.Toplevel):
         x = (self.winfo_screenwidth() // 2) - (width // 2)
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+
+    def update_eleve_list(self):
+        eleves = db.get_eleves()
+        self.eleve_combobox['values'] = [f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})" for eleve in eleves]
 
     def load_note_data(self):
         note_data = db.get_note_by_id(self.note_id)
@@ -272,12 +272,12 @@ class NoteForm(tk.Toplevel):
             messagebox.showerror("Erreur", "Veuillez remplir tous les champs", parent=self)
 
 class AbsenceForm(tk.Toplevel):
-    def __init__(self, parent, eleve_id=None):
+    def __init__(self, parent, absence_id=None):
         super().__init__(parent)
         self.parent = parent
-        self.eleve_id = eleve_id
+        self.absence_id = absence_id
         
-        self.title("Enregistrer une absence")
+        self.title("Enregistrer une absence" if absence_id is None else "Modifier une absence")
         self.geometry("500x400")
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
@@ -286,6 +286,18 @@ class AbsenceForm(tk.Toplevel):
         self.center_window()
         self.transient(parent)
         self.grab_set()
+        
+        # Load data if editing mode
+        if absence_id is not None:
+            self.load_absence_data()
+
+    def center_window(self):
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry('{}x{}+{}+{}'.format(width + 200, height + 70, x - 100, y - 50))
 
     def setup_fonts(self):
         self.title_font = tkFont.Font(family="Helvetica", size=14, weight="bold")
@@ -321,7 +333,8 @@ class AbsenceForm(tk.Toplevel):
         main_frame.pack(fill='both', expand=True, padx=20, pady=20)
         
         # Title
-        ttk.Label(main_frame, text="Enregistrer une absence", style='Title.TLabel').pack(pady=(0, 20))
+        title_text = "Enregistrer une absence" if self.absence_id is None else "Modifier une absence"
+        ttk.Label(main_frame, text=title_text, style='Title.TLabel').pack(pady=(0, 20))
         
         # Form fields
         form_frame = ttk.Frame(main_frame, style='Card.TFrame')
@@ -338,30 +351,73 @@ class AbsenceForm(tk.Toplevel):
         self.date_var = tk.StringVar()
         ttk.Entry(form_frame, textvariable=self.date_var, width=15, font=self.normal_font).grid(row=1, column=1, sticky='w', padx=5, pady=10)
         
+        # Nombre de jours
+        ttk.Label(form_frame, text="Nombre de jours:", style='TLabel').grid(row=2, column=0, sticky='w', padx=5, pady=10)
+        self.nb_jours_var = tk.StringVar()
+        ttk.Entry(form_frame, textvariable=self.nb_jours_var, width=5, font=self.normal_font).grid(row=2, column=1, sticky='w', padx=5, pady=10)
+
         # Buttons
         button_frame = ttk.Frame(main_frame, style='Card.TFrame')
         button_frame.pack(fill='x', pady=(20, 0))
         
         ttk.Button(button_frame, text="Annuler", command=self.destroy, style='Secondary.TButton').pack(side='right', padx=5)
-        ttk.Button(button_frame, text="Enregistrer", command=self.save_absence, style='Primary.TButton').pack(side='right', padx=5)
+        save_text = "Enregistrer" if self.absence_id is None else "Modifier"
+        ttk.Button(button_frame, text=save_text, command=self.save_absence, style='Primary.TButton').pack(side='right', padx=5)
 
     def update_eleve_list(self):
-        # Placeholder for updating élève list
-        pass
+        eleves = db.get_eleves()
+        self.eleve_combobox['values'] = [f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})" for eleve in eleves]
+        if self.eleve_combobox['values']:
+            self.eleve_combobox.current(0)
 
-    def center_window(self):
-        self.update_idletasks()
-        width = self.winfo_width()
-        height = self.winfo_height()
-        x = (self.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+    def load_absence_data(self):
+        absence = db.get_absence_by_id(self.absence_id)
+        if not absence:
+            messagebox.showerror("Erreur", "Absence non trouvée", parent=self.parent)
+            self.destroy()
+            return
+        eleve_id, date_absence, nb_jours = absence
+        # Find the student in the combobox list
+        eleves = db.get_eleves()
+        student_display = None
+        for eleve in eleves:
+            if eleve[0] == eleve_id:
+                student_display = f"{eleve[2]} {eleve[1]} (ID: {eleve[0]})"
+                break
+        if not student_display:
+            messagebox.showerror("Erreur", "Élève introuvable pour cette absence.", parent=self.parent)
+            self.destroy()
+            return
+        self.eleve_combobox.set(student_display)
+        self.eleve_combobox.config(state='disabled')
+        self.date_var.set(date_absence)
+        self.nb_jours_var.set(str(nb_jours))
+
 
     def save_absence(self):
-        # Placeholder for saving absence
-        print("TODO: save_absence")
-        self.destroy()
+        # Validate
+        if not self.eleve_combobox.get():
+            messagebox.showerror("Erreur", "Veuillez sélectionner un élève.")
+            return
+        if not self.date_var.get():
+            messagebox.showerror("Erreur", "Veuillez saisir la date.")
+            return
+        if not self.nb_jours_var.get().isdigit():
+            messagebox.showerror("Erreur", "Veuillez saisir un nombre de jours valide.")
+            return
 
+        eleve_id = int(self.eleve_combobox.get().split("(ID: ")[1].split(")")[0])
+        date = self.date_var.get()
+        nb_jours = int(self.nb_jours_var.get())
+
+        if self.absence_id is not None:
+            db.modify_absence(self.absence_id, date, nb_jours)
+            self.parent.parent.refresh_table()
+            self.destroy()
+        else:
+            db.add_absence(eleve_id, date, nb_jours)
+            self.parent.refresh_table()
+            self.destroy()
 
 class GestionNotesAbsencesApp(tk.Tk):
     def __init__(self):
@@ -988,7 +1044,8 @@ class AbsencesViewDialog(tk.Toplevel):
             messagebox.showerror("Erreur", "Aucune absence sélectionnée", parent=self)
             return
         absence_id = self.absences_tree.item(selected_absence[0])['values'][0]
-        AbsenceForm(self, absence_id)
+        form = AbsenceForm(self, absence_id)
+        self.wait_window(form)
         self.parent.refresh_table()
         self.destroy()
 
