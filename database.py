@@ -89,11 +89,18 @@ def get_notes(eleve_id):
     conn.close()
     return data
 
-# Modify Update a note
-def update_note(note_id, note):
+def get_note_by_id(note_id):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
-    cursor.execute("UPDATE notes SET note=? WHERE id=?", (note, note_id))
+    cursor.execute("SELECT * FROM notes WHERE id=?", (note_id,))
+    data = cursor.fetchone()
+    conn.close()
+    return data
+
+def update_note(note_id, eleve_id, matiere, note):
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE notes SET note=?, eleve_id=?, matiere=? WHERE id=?", (note, eleve_id, matiere, note_id))
     conn.commit()
     conn.close()
 
@@ -114,10 +121,24 @@ def add_absence(eleve_id, date_absence, nb_jours):
 def get_absences(eleve_id):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT date_absence, nb_jours FROM absences WHERE eleve_id=? ORDER BY date_absence DESC", (eleve_id,))
+    cursor.execute("""SELECT id, nb_jours, date_absence FROM absences WHERE eleve_id=? ORDER BY date_absence DESC""", (eleve_id,))
     data = cursor.fetchall()
     conn.close()
     return data
+
+def delete_absence(absence_id):
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM absences WHERE id=?", (absence_id,))
+    conn.commit()
+    conn.close()
+
+def modify_absence(absence_id, date_absence, nb_jours):
+    conn = sqlite3.connect("grademanagement.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE absences SET date_absence=?, nb_jours=? WHERE id=?", (date_absence, nb_jours, absence_id))
+    conn.commit()
+    conn.close()
 
 def init_sample_data():
     import random
