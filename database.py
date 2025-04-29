@@ -97,10 +97,10 @@ def get_note_by_id(note_id):
     conn.close()
     return data
 
-def update_note(note_id, eleve_id, matiere, note):
+def update_note(note_id, eleve_id, note):
     conn = sqlite3.connect("grademanagement.db")
     cursor = conn.cursor()
-    cursor.execute("UPDATE notes SET note=?, eleve_id=?, matiere=? WHERE id=?", (note, eleve_id, matiere, note_id))
+    cursor.execute("UPDATE notes SET note=?, eleve_id=? WHERE id=?", (note, eleve_id, note_id))
     conn.commit()
     conn.close()
 
