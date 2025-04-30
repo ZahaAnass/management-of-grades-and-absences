@@ -1,0 +1,4 @@
+tkinter
+tkcalendar
+reportlab
+sqlite3
