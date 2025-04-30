@@ -3,13 +3,15 @@ from tkinter import ttk, messagebox, filedialog
 import tkinter.font as tkFont
 import database as db
 from utils import *
+import os
+from tkcalendar import DateEntry
 
 # Colors and styling constants for theme
 COLORS = {
     'primary': '#3f51b5',     # Indigo
     'primary_light': '#757de8', # Lighter Indigo
     'primary_dark': '#002984', # Darker Indigo
-    'secondary': '#ff4081',   # Pink
+    'secondary': '#ff9800',   # Orange
     'background': '#f5f5f5',  # Light grey
     'card': '#ffffff',        # White
     'text': '#212121',        # Dark text
@@ -263,11 +265,13 @@ class NoteForm(tk.Toplevel):
             
             if self.note_id is None:
                 db.add_notes(eleve_id, matiere, note)
+                self.parent.refresh_table()
+                self.destroy()
             else:
                 db.update_note(self.note_id, eleve_id, note)
+                self.parent.parent.refresh_table()
+                self.destroy()
             
-            self.parent.parent.refresh_table()
-            self.destroy()
         else:
             messagebox.showerror("Erreur", "Veuillez remplir tous les champs", parent=self)
 
@@ -346,10 +350,16 @@ class AbsenceForm(tk.Toplevel):
         self.eleve_combobox.grid(row=0, column=1, padx=5, pady=10)
         self.update_eleve_list()
         
-        # Date
-        ttk.Label(form_frame, text="Date (YYYY-MM-DD):", style='TLabel').grid(row=1, column=0, sticky='w', padx=5, pady=10)
-        self.date_var = tk.StringVar()
-        ttk.Entry(form_frame, textvariable=self.date_var, width=15, font=self.normal_font).grid(row=1, column=1, sticky='w', padx=5, pady=10)
+        # Date - Replace text entry with DateEntry widget
+        ttk.Label(form_frame, text="Date:", style='TLabel').grid(row=1, column=0, sticky='w', padx=5, pady=10)
+        self.date_entry = DateEntry(form_frame, 
+                                    width=15, 
+                                    background=COLORS['primary'],
+                                    foreground=COLORS['button_text'],
+                                    borderwidth=2,
+                                    date_pattern='yyyy-mm-dd')
+        self.date_entry.grid(row=1, column=1, sticky='w', padx=5, pady=10)
+        self.date_entry.config(state='readonly')
         
         # Nombre de jours
         ttk.Label(form_frame, text="Nombre de jours:", style='TLabel').grid(row=2, column=0, sticky='w', padx=5, pady=10)
@@ -390,7 +400,7 @@ class AbsenceForm(tk.Toplevel):
             return
         self.eleve_combobox.set(student_display)
         self.eleve_combobox.config(state='disabled')
-        self.date_var.set(date_absence)
+        self.date_entry.set_date(date_absence)
         self.nb_jours_var.set(str(nb_jours))
 
 
@@ -399,7 +409,7 @@ class AbsenceForm(tk.Toplevel):
         if not self.eleve_combobox.get():
             messagebox.showerror("Erreur", "Veuillez sélectionner un élève.")
             return
-        if not self.date_var.get():
+        if not self.date_entry.get():
             messagebox.showerror("Erreur", "Veuillez saisir la date.")
             return
         if not self.nb_jours_var.get().isdigit():
@@ -407,7 +417,7 @@ class AbsenceForm(tk.Toplevel):
             return
 
         eleve_id = int(self.eleve_combobox.get().split("(ID: ")[1].split(")")[0])
-        date = self.date_var.get()
+        date = self.date_entry.get_date()
         nb_jours = int(self.nb_jours_var.get())
 
         if self.absence_id is not None:
@@ -739,12 +749,60 @@ class GestionNotesAbsencesApp(tk.Tk):
             AbsencesViewDialog(self, student_data, absences)
 
     def export_csv_ui(self):
-        # Placeholder for exporting CSV
-        print("TODO: export_csv_ui")
+        columns = ("ID", "Nom", "Prénom", "Classe", "Moyenne", "Absences", "Taux d'Assiduité")
+
+        data = []
+        for single_item in self.tree.get_children():
+            values = self.tree.item(single_item)['values']
+            row_dict = dict(zip(columns, values))
+            data.append(row_dict)
+
+        if not data:
+            messagebox.showwarning("Export CSV", "Aucune donnée à exporter.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Enregistrer sous"
+        )
+        if not file_path:
+            return
+
+        success = export_csv(data, file_path)
+        if success:
+            messagebox.showinfo("Export CSV", f"Exportation réussie :\n{os.path.basename(file_path)}") # returns exemple "students.csv" if file_path == "/home/anass/exports/students.csv" 
+        else:
+            messagebox.showerror("Export CSV", "Échec de l'exportation du CSV.")
 
     def export_pdf_ui(self):
-        # Placeholder for exporting PDF
-        print("TODO: export_pdf_ui")
+        columns = ("ID", "Nom", "Prénom", "Classe", "Moyenne", "Absences", "Taux d'Assiduité")
+
+        data = []
+        for single_item in self.tree.get_children():
+            values = self.tree.item(single_item)['values']
+            row_dict = dict(zip(columns, values))
+            data.append(row_dict)
+
+        if not data:
+            messagebox.showwarning("Export PDF", "Aucune donnée à exporter.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf")],
+            title="Enregistrer sous"
+        )
+        if not file_path:
+            return
+
+        title = "Liste des Étudiants"
+
+        success = export_pdf(data, file_path, title=title)
+        if success:
+            messagebox.showinfo("Export PDF", f"Exportation réussie :\n{os.path.basename(file_path)}")
+        else:
+            messagebox.showerror("Export PDF", "Échec de l'exportation du PDF.")
 
     def sort_treeview(self, tree, col, reverse):
         """Sort treeview content by column"""
@@ -886,8 +944,8 @@ class NotesViewDialog(tk.Toplevel):
                     style='Primary.TButton').pack(side='left', padx=5)
 
         ttk.Button(button_frame, text="Supprimer la note sélectionnée", 
-                    command=self.delete_selected_note, 
-                    style='Primary.TButton').pack(side='left', padx=5)
+                command=self.delete_selected_note, 
+                style='Primary.TButton').pack(side='left', padx=5)
 
         ttk.Button(button_frame, text="Fermer", 
                     command=self.destroy, 
