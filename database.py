@@ -1,7 +1,13 @@
 import sqlite3
+import os
+
+# Get the directory of the current script
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "grademanagement.db")
+
+# DB_PATH = "/home/anass/Desktop/github repositories/management-of-grades-and-absences/grademanagement.db"
 
 def create_table():
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""create table if not exists eleves (
         id integer primary key autoincrement,
@@ -28,7 +34,7 @@ def create_table():
     conn.close()
 
 def show_table():
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
                     SELECT
@@ -46,28 +52,28 @@ def show_table():
     return data
 
 def add_eleve(nom, prenom, classe):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO eleves (nom, prenom, classe) VALUES (?, ?, ?)", (nom, prenom, classe))
     conn.commit()
     conn.close()
 
 def update_eleve(eleve_id, nom, prenom, classe):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE eleves SET nom=?, prenom=?, classe=? WHERE id=?", (nom, prenom, classe, eleve_id))
     conn.commit()
     conn.close()
 
 def delete_eleve(eleve_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM eleves WHERE id=?", (eleve_id,))
     conn.commit()
     conn.close()
 
 def get_eleves():
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT id, nom, prenom, classe FROM eleves")
     data = cursor.fetchall()
@@ -75,14 +81,14 @@ def get_eleves():
     return data
 
 def add_notes(eleve_id, matiere, note):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO notes (eleve_id, matiere, note) VALUES (?, ?, ?)", (eleve_id, matiere, note))
     conn.commit()
     conn.close()
 
 def get_notes(eleve_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT id ,matiere, note, date_note FROM notes WHERE eleve_id=? ORDER BY date_note DESC", (eleve_id,))
     data = cursor.fetchall()
@@ -90,7 +96,7 @@ def get_notes(eleve_id):
     return data
 
 def get_note_by_id(note_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM notes WHERE id=?", (note_id,))
     data = cursor.fetchone()
@@ -98,28 +104,28 @@ def get_note_by_id(note_id):
     return data
 
 def update_note(note_id, eleve_id, note):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE notes SET note=?, eleve_id=? WHERE id=?", (note, eleve_id, note_id))
     conn.commit()
     conn.close()
 
 def delete_note(note_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM notes WHERE id=?", (note_id,))
     conn.commit()
     conn.close()
 
 def add_absence(eleve_id, date_absence, nb_jours):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO absences (eleve_id, date_absence, nb_jours) VALUES (?, ?, ?)", (eleve_id, date_absence, nb_jours))
     conn.commit()
     conn.close()
 
 def get_absences(eleve_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""SELECT id, nb_jours, date_absence FROM absences WHERE eleve_id=? ORDER BY date_absence DESC""", (eleve_id,))
     data = cursor.fetchall()
@@ -127,7 +133,7 @@ def get_absences(eleve_id):
     return data
 
 def get_absence_by_id(absence_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT eleve_id, date_absence, nb_jours FROM absences WHERE id=?", (absence_id,))
     data = cursor.fetchone()
@@ -135,28 +141,28 @@ def get_absence_by_id(absence_id):
     return data
 
 def delete_absence(absence_id):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM absences WHERE id=?", (absence_id,))
     conn.commit()
     conn.close()
 
 def modify_absence(absence_id, date_absence, nb_jours):
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE absences SET date_absence=?, nb_jours=? WHERE id=?", (date_absence, nb_jours, absence_id))
     conn.commit()
     conn.close()
 
 def get_classes():
-    conn = sqlite3.connect("grademanagement.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT classe FROM eleves")
     data = cursor.fetchall()
     conn.close()
     return [row[0] for row in data] # Cause this data is an tuple We Need To Get The Value At Index 0
 
-def init_sample_data():
+def sample_data():
     import random
     from datetime import datetime, timedelta
     if not get_eleves():
@@ -187,4 +193,3 @@ def init_sample_data():
         print('50 record added')
 
 create_table()
-init_sample_data()
