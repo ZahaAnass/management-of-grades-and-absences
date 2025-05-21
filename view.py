@@ -32,9 +32,11 @@ class EleveForm(tk.Toplevel):
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
         self.setup_style()
-        self.create_widgets()
         self.center_window()
+        self.create_widgets()
+        # Keep this window above its parent (acts like a dialog)
         self.transient(parent)
+        # Block interaction with other windows until this one is closed
         self.grab_set()
         
         # Load data if editing
@@ -151,9 +153,11 @@ class NoteForm(tk.Toplevel):
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
         self.setup_style()
-        self.create_widgets()
         self.center_window()
+        self.create_widgets()
+        # Keep this window above its parent (acts like a dialog)
         self.transient(parent)
+        # Block interaction with other windows until this one is closed
         self.grab_set()
         
         # Load data if editing mode
@@ -286,9 +290,11 @@ class AbsenceForm(tk.Toplevel):
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
         self.setup_style()
-        self.create_widgets()
         self.center_window()
+        self.create_widgets()
+        # Keep this window above its parent (acts like a dialog)
         self.transient(parent)
+        # Block interaction with other windows until this one is closed
         self.grab_set()
         
         # Load data if editing mode
@@ -846,9 +852,11 @@ class NotesViewDialog(tk.Toplevel):
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
         self.setup_style()
-        self.create_widgets()
         self.center_window()
+        self.create_widgets()
+        # Keep this window above its parent (acts like a dialog)
         self.transient(parent)
+        # Block interaction with other windows until this one is closed
         self.grab_set()
 
     def setup_fonts(self):
@@ -999,9 +1007,11 @@ class AbsencesViewDialog(tk.Toplevel):
         self.configure(bg=COLORS['background'])
         self.setup_fonts()
         self.setup_style()
-        self.create_widgets()
         self.center_window()
+        self.create_widgets()
+        # Keep this window above its parent (acts like a dialog)
         self.transient(parent)
+        # Block interaction with other windows until this one is closed
         self.grab_set()
 
     def setup_fonts(self):
